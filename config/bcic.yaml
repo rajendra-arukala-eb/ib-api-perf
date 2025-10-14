@@ -1,0 +1,31 @@
+service:
+  rest_v1_base_url: "https://bcictemp-int.eng.infiniteblue.com"
+  rest_v2_base_url: "https://bcictemp-int.eng.infiniteblue.com"
+  verify_ssl: false
+
+auth:
+  users_csv: "resources/datasets/bcic-users.csv"
+  v1_users_csv: "resources/datasets/bcic-users.csv"
+  v2_users_csv: "resources/datasets/bcic-users.csv"
+  # If your tenant must be specified at login:
+  custId: ""   # e.g., "5857"
+  v2_integration:
+    value: "ib-api-perf-dev"
+load:
+  vus: 1
+  spawn_rate: 1
+  duration: "1m"
+  think_time_range_ms: [200, 500]
+
+  flow_weights:
+    v1_list_employees: 2
+    v1_list_locations: 5
+    v1_list_teams: 5
+    v2_list_employees: 2
+    v2_get_employee: 5
+    v2_update_employee: 1
+
+  refresh_token:
+    by_time_minutes: 25   # under 30m default JWT expiry
+    jitter_minutes: 3
+    logout_on_refresh: true

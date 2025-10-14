@@ -1,0 +1,103 @@
+service:
+  # Base URLs (v1 for reads, v2 for writes). v2 base may be overridden by login response "url".
+  rest_v1_base_url: "https://localhost:8080"
+  rest_v2_base_url: "https://localhost:8080"
+  timeout_s: 15
+
+auth:
+  v1_users_csv: "resources/datasets/v1-users.csv"
+  v2_users_csv: "resources/datasets/v1-users.csv"
+
+  # ---------- v1 (REST 1.0) ----------
+  v1_login_path: "/rest/api/login"
+  # Default header names used by the login endpoint
+  v1_header_names:
+    login: "loginName"
+    password: "password"
+    custId: "custId"     # optional; fill auth.custId below if needed
+  # Optional tenant/customer id for v1 login
+  custId: ""
+
+  # How to include sessionId in every v1 request
+  v1_session_propagation:
+    mode: "header"       # header | query | cookie
+    name: "sessionId"    # header/query key name when mode != cookie
+
+  # ---------- v2 (REST 2.0) ----------
+  v2_login_path: "/rest/api2/login"
+  v2_login_basic: true               # use HTTP Basic for the login request
+  v2_token_json_path: "JWT"          # where to read the token in login JSON
+  v2_token_fallback_header: ""       # e.g., "X-Auth-Token" if not in JSON
+  v2_token_header: "Authorization"   # how we carry the token to subsequent calls
+  v2_token_scheme: "Bearer"          # e.g., "Bearer" or "JWT"
+
+  # Integration name is mandatory in v2. Send as query (default) or header.
+  v2_integration:
+    mode: "query"                    # query | header
+    name: "integrationName"
+    value: "ib-perf-harness"
+
+operations:
+  users:
+    get_all_path: "/data/users"
+
+  employees:
+    # Full paths expected here (will be joined with the relevant base)
+    list_path:   "/rest/api/getPage"
+    create_path: "/data/people"
+    update_path: "/data/people/{id}"
+    delete_path: "/data/people/{id}"
+
+    # Pagination for the v1 list
+    list_pagination:
+      mode: "page_size"              # or "offset_limit"
+      page_param: "page"
+      size_param: "rowsPerPage"
+      page_one_based: false          # set true if API is 1-based
+      page_size: 2000
+      total_count: 55000
+
+  locations:
+    list_path:   "/rest/api/getPage"
+    list_pagination:
+      page_size: 200
+      total_count: 4300
+
+  teams:
+    list_path:   "/rest/api/getPage"
+    list_pagination:
+      page_size: 200
+      total_count: 4300
+
+  employees2:
+    # Full paths expected here (will be joined with the relevant base)
+    list_path: "/data/people"
+    create_path: "/data/people"
+    get_path: "/data/people/{id}"
+    update_path: "/data/people/{id}"
+    delete_path: "/data/people/{id}"
+    list_pagination:
+      page_size: 2000
+      total_count: 55000
+    seeded:
+      emp_ids: [125494748]
+
+load:
+  vus: 10
+  spawn_rate: 5
+  duration: "10m"
+  think_time_range_ms: [50, 200]
+  flow_weights:
+    v1_list_employees: 1
+    v1_list_locations: 1
+    v1_list_teams: 1
+    v2_employees_list: 1
+    v2_employee_get: 1
+    v2_employee_update: 1
+  refresh_token:
+    by_time_minutes: 25   # under 30m default JWT expiry
+    jitter_minutes: 3
+    logout_on_refresh: true
+
+observability:
+  correlation_header: "X-Correlation-ID"

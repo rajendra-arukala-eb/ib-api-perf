@@ -1,0 +1,6 @@
+service:
+  rest_base_url: "https://staging-rest.example.com"
+  rest2_base_url: "https://staging-rest2.example.com"
+  api_flavor: "rest2"
+provisioning:
+  tenant_name: "ib-staging-tenant"

@@ -1,0 +1,7 @@
+service:
+  rest_base_url: "https://prod-rest.example.com"
+  rest2_base_url: "https://prod-rest2.example.com"
+  api_flavor: "rest2"
+provisioning:
+  tenant_name: "ib-prod-tenant"
+  reset_if_exists: false
