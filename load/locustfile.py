@@ -5,6 +5,9 @@ import yaml
 from load.ops import build_list_params, build_update_body, build_create_body
 from perf.utils import http_opts
 
+from users.v1_user import V1ReadsUser
+from users.v2_user import V2WritesUser
+
 
 # -------- Config loading --------
 def deep_merge(a: dict, b: dict):

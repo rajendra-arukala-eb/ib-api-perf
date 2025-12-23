@@ -5,6 +5,7 @@ service:
   timeout_s: 15
 
 auth:
+  users_csv: "resources/datasets/bcic-users.csv"
   v1_users_csv: "resources/datasets/v1-users.csv"
   v2_users_csv: "resources/datasets/v1-users.csv"
 
