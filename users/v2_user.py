@@ -38,7 +38,7 @@ class V2WritesUser(ApiUserBase):
         params = dict(self.v2_query or {})
         params['start'] = self.page_cursor
         params['take'] = pag.get("page_size", 2000)
-
+        print("GET-ALL || URL: ", url, " PARAMS: ", params)
         with self.client.get(url, params=params, headers=hdr_with_corr(self.v2_headers), name="v2_list_employees", **http_opts(), catch_response=True) as r:
             if r.status_code == 401:
                 u, p = self.user_cred; self._login_v2(u, p)
@@ -67,10 +67,11 @@ class V2WritesUser(ApiUserBase):
         path_tpl = CFG["operations"]["employees2"]["get_path"]
         seeded = CFG["operations"]["employees2"]["seeded"]["emp_ids"] or []
         emp_id = random.choice(self.recent_ids) if self.recent_ids else random.choice(seeded)
-
+        if not emp_id:
+            return
         url = join_v2(self.v2_base, path_tpl.format(id=emp_id))
         params = dict(self.v2_query or {})
-        print("URL: ", url, " PARAMS: ", params)
+        print("GET || URL: ", url, " PARAMS: ", params)
 
         with self.client.get(url, params=params, headers=hdr_with_corr(self.v2_headers), name="v2_get_employee", **http_opts(), catch_response=True) as r:
             if r.status_code == 401:
@@ -81,8 +82,8 @@ class V2WritesUser(ApiUserBase):
             else:
                 try:
                     data = r.json() or {}
-                    print("DATA: ", data)
-                    print("RECENT EMP: ", len(self.recent_emps))
+                    # print("DATA: ", data)
+                    # print("RECENT EMP: ", len(self.recent_emps))
                     if data.get("results") and isinstance(data.get("results"), list ) and len(data.get("results"))>0:
                         self.recent_emps.append(data.get("results")[0])
                     if len(self.recent_emps) > 100:
@@ -95,7 +96,7 @@ class V2WritesUser(ApiUserBase):
 
 
     @tag("v2","v2_update_employee")
-    @task(weight=WEIGHTS.get("v2_update_employee", 0))
+    @task(weight=WEIGHTS.get("v2_update_employee", 1))
     def v2_update_employee(self):
         self.maybe_refresh_tokens()
         path_tpl = CFG["operations"]["employees2"]["get_path"]
@@ -107,7 +108,7 @@ class V2WritesUser(ApiUserBase):
         params = dict(self.v2_query or {})
         ts = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d-%H%M%S")
         body = {"lastName": emp.get("lastName", "") + f" UPDATED-{ts}"}
-        print("URL: ", url, " PARAMS: ", params, " BODY: ", body)
+        print("PUT || URL: ", url, " PARAMS: ", params, " BODY: ", body)
 
         if emp:
             with self.client.put(url, params=params, json= body, headers=hdr_with_corr(self.v2_headers), name="v2_update_employee", **http_opts(), catch_response=True) as r:

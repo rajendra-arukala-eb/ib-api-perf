@@ -1,38 +1,42 @@
 import json
 
 import requests
+from requests.auth import HTTPBasicAuth
 
-URL = "https://bcictemp-int.eng.infiniteblue.com"
+URL = "http://localhost:8830"
 API_KEY = "f406b826-4c16-455d-9b95-61f9d93f4d0c-474308870-143662325"
 
 def login():
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "API-Key": API_KEY
+        # "API-Key": API_KEY
+        "Authentication": f"Basic User11 welcome"
     }
     url = URL + "/rest/api2/login"
-    result = requests.post(url, headers=headers, verify=False)
+    result = requests.post(url, headers=headers, auth=HTTPBasicAuth("User11", "welcome"), verify=False)
     print("Status Code:", result.status_code)
     print("Response Body:", result.text)
     url = result.json().get("results")[0].get("url")
-    return url
+    jwt = result.json().get("results")[0].get("JWT")
+    return url, jwt
 
 
-def create_users(url, count=10):
+def create_users(url, jwt, count=10):
     headers = {
         "Content-Type": "application/json",
         "Accept": "application/json",
-        "API-Key": API_KEY
+        # "API-Key": API_KEY
+        "JWT": jwt
     }
-    start = 8
+    start = 0
     for i in range(start, start + count + 1):
         user_data = {
             "language": "en",
             "loginName": f"apiuser{i}@yopmail.com",
             "firstName": "API",
             "lastName": f"Test User {i}",
-            "role": "Administrator API",
+            "role": "Administrator",
             "email": f"apiuser{i}@yopmail.com",
             "@p1": "welcome",
             "password": "welcome"
@@ -44,5 +48,5 @@ def create_users(url, count=10):
         print(f"Create User {i} - Response Body:", response.text)
 
 if __name__ == "__main__":
-    url = login()
-    create_users(url, 12)
+    url, jwt = login()
+    create_users(url, jwt, 8)

@@ -1,3 +1,5 @@
+import sys
+from os import system
 from typing import Optional
 from locust import events
 from perf.config import CFG
@@ -76,6 +78,9 @@ class LoginOps:
         with self.client.post(login_url, headers=headers, json=body, name="(auth) v2_login", **http_opts(), catch_response=True) as r:
             if r.status_code != 200:
                 r.failure(f"v2 login failed {r.status_code}")
+                print("username: ", username, " password: ", password)
+                print("[v2 login] failed with status ", r.status_code, " response: ", r.text)
+                sys.exit(1)
                 return
             data = {}
             try:

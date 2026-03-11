@@ -5,7 +5,6 @@ import yaml
 from load.ops import build_list_params, build_update_body, build_create_body
 from perf.utils import http_opts
 
-from users.v1_user import V1ReadsUser
 from users.v2_user import V2WritesUser
 
 
@@ -73,6 +72,7 @@ def _merge_params(a: dict | None, b: dict | None) -> dict:
 
 # -------- User with v1 session + v2 JWT --------
 class V1V2ApiUser(HttpUser):
+    abstract = True
     """
     - v1 (REST 1.0): login via headers -> sessionId -> header/query/cookie on reads
     - v2 (REST 2.0): login via Basic -> JWT -> Authorization header on writes
@@ -229,102 +229,102 @@ class V1V2ApiUser(HttpUser):
         a, b = CFG["load"]["think_time_range_ms"]
         time.sleep(random.uniform(a, b)/1000)
 
-    # ----- Tasks -----
-    @tag("list_employees")
-    @task(weight=WEIGHTS.get("list_employees", 0))
-    def list_employees(self):
-        self._maybe_refresh_tokens()
-        url = CFG["service"]["rest_v1_base_url"].rstrip("/") + CFG["operations"]["employees"]["list_path"]
-        pag = CFG["operations"]["employees"]["list_pagination"]
-        params = _merge_params(self.v1_query, build_list_params(pag, self.page_cursor))
-        with self.client.get(url, params=params, headers=hdr_with_corr(self.v1_headers), name="employees_list", catch_response=True) as r:
-            if r.status_code in (200, 206):
-                try:
-                    data = r.json()
-                    items = data.get("items") if isinstance(data, dict) else data
-                    if isinstance(items, list):
-                        for it in items[:50]:
-                            if isinstance(it, dict):
-                                emp_id = it.get("id")
-                                if emp_id:
-                                    self.recent_ids.append(emp_id)
-                        if len(self.recent_ids) > 3000:
-                            self.recent_ids = self.recent_ids[-1500:]
-                except Exception:
-                    pass
-                r.success()
-            else:
-                if r.status_code == 401:
-                    self._login_v1()
-                r.failure(f"employees_list {r.status_code}")
-        self.page_cursor = (self.page_cursor + 1) % employees_total_pages()
-        self._think()
-
-    @tag("list_locations")
-    @task(weight=WEIGHTS.get("list_locations", 0))
-    def list_locations(self):
-        self._maybe_refresh_tokens()
-        url = CFG["service"]["rest_v1_base_url"].rstrip("/") + CFG["operations"]["locations"]["list_path"]
-        r = self.client.get(url, params=self.v1_query, headers=hdr_with_corr(self.v1_headers), name="locations_list")
-        if r.status_code == 401:
-            self._login_v1()
-        self._think()
-
-    @tag("create_employee")
-    @task(weight=WEIGHTS.get("create_employee", 0))
-    def create_employee(self):
-        self._maybe_refresh_tokens()
-        url = self.v2_base + CFG["operations"]["employees"]["create_path"]
-        body = build_create_body(f"User{uuid.uuid4()}", random.choice(["ENG","HR","FIN"]))
-        r = self.client.post(url, params=self.v2_query, json=body, headers=hdr_with_corr(self.v2_headers), name="employees_create")
-        if r.status_code == 401:
-            self._login_v2()
-        else:
-            try:
-                emp_id = (r.json() or {}).get("id")
-                if emp_id:
-                    self.recent_ids.append(emp_id)
-            except Exception:
-                pass
-        self._think()
-
-    @tag("update_employee")
-    @task(weight=WEIGHTS.get("update_employee", 0))
-    def update_employee(self):
-        self._maybe_refresh_tokens()
-        emp_id = random.choice(self.recent_ids) if self.recent_ids else random.randint(1, int(CFG["operations"]["employees"]["list_pagination"].get("total_count", 1000)))
-        path_tpl = CFG["operations"]["employees"]["update_path"]
-        url = self.v2_base + path_tpl.format(id=emp_id)
-        body = build_update_body(random.randint(1,10))
-        r = self.client.put(url, params=self.v2_query, json=body, headers=hdr_with_corr(self.v2_headers), name="employees_update")
-        if r.status_code == 401:
-            self._login_v2()
-        self._think()
-
-    @tag("delete_employee")
-    @task(weight=WEIGHTS.get("delete_employee", 0))
-    def delete_employee(self):
-        self._maybe_refresh_tokens()
-        emp_id = self.recent_ids.pop(0) if self.recent_ids else random.randint(1, int(CFG["operations"]["employees"]["list_pagination"].get("total_count", 1000)))
-        path_tpl = CFG["operations"]["employees"]["delete_path"]
-        url = self.v2_base + path_tpl.format(id=emp_id)
-        r = self.client.delete(url, params=self.v2_query, headers=hdr_with_corr(self.v2_headers), name="employees_delete")
-        if r.status_code == 401:
-            self._login_v2()
-        self._think()
-
-    @tag("get_all_users")
-    @task(weight=WEIGHTS.get("get_all_users", 0))
-    def get_all_users(self):
-        self._maybe_refresh_tokens()
-        url = self.v2_base + CFG["operations"]["users"]["get_all_path"]
-        print("Getting all users from", url)
-        print("Headers: ", self.v2_headers)
-        r = self.client.get(url, params=self.v2_query, headers=hdr_with_corr(self.v2_headers), name="get_all_users")
-        if r.status_code == 401:
-            self._login_v2()
-        self._think()
-
+    # # ----- Tasks -----
+    # @tag("list_employees")
+    # @task(weight=WEIGHTS.get("list_employees", 1))
+    # def list_employees(self):
+    #     self._maybe_refresh_tokens()
+    #     url = CFG["service"]["rest_v1_base_url"].rstrip("/") + CFG["operations"]["employees"]["list_path"]
+    #     pag = CFG["operations"]["employees"]["list_pagination"]
+    #     params = _merge_params(self.v1_query, build_list_params(pag, self.page_cursor))
+    #     with self.client.get(url, params=params, headers=hdr_with_corr(self.v1_headers), name="employees_list", catch_response=True) as r:
+    #         if r.status_code in (200, 206):
+    #             try:
+    #                 data = r.json()
+    #                 items = data.get("items") if isinstance(data, dict) else data
+    #                 if isinstance(items, list):
+    #                     for it in items[:50]:
+    #                         if isinstance(it, dict):
+    #                             emp_id = it.get("id")
+    #                             if emp_id:
+    #                                 self.recent_ids.append(emp_id)
+    #                     if len(self.recent_ids) > 3000:
+    #                         self.recent_ids = self.recent_ids[-1500:]
+    #             except Exception:
+    #                 pass
+    #             r.success()
+    #         else:
+    #             if r.status_code == 401:
+    #                 self._login_v1()
+    #             r.failure(f"employees_list {r.status_code}")
+    #     self.page_cursor = (self.page_cursor + 1) % employees_total_pages()
+    #     self._think()
+    #
+    # @tag("list_locations")
+    # @task(weight=WEIGHTS.get("list_locations", 0))
+    # def list_locations(self):
+    #     self._maybe_refresh_tokens()
+    #     url = CFG["service"]["rest_v1_base_url"].rstrip("/") + CFG["operations"]["locations"]["list_path"]
+    #     r = self.client.get(url, params=self.v1_query, headers=hdr_with_corr(self.v1_headers), name="locations_list")
+    #     if r.status_code == 401:
+    #         self._login_v1()
+    #     self._think()
+    #
+    # @tag("create_employee")
+    # @task(weight=WEIGHTS.get("create_employee", 0))
+    # def create_employee(self):
+    #     self._maybe_refresh_tokens()
+    #     url = self.v2_base + CFG["operations"]["employees"]["create_path"]
+    #     body = build_create_body(f"User{uuid.uuid4()}", random.choice(["ENG","HR","FIN"]))
+    #     r = self.client.post(url, params=self.v2_query, json=body, headers=hdr_with_corr(self.v2_headers), name="employees_create")
+    #     if r.status_code == 401:
+    #         self._login_v2()
+    #     else:
+    #         try:
+    #             emp_id = (r.json() or {}).get("id")
+    #             if emp_id:
+    #                 self.recent_ids.append(emp_id)
+    #         except Exception:
+    #             pass
+    #     self._think()
+    #
+    # @tag("update_employee")
+    # @task(weight=WEIGHTS.get("update_employee", 0))
+    # def update_employee(self):
+    #     self._maybe_refresh_tokens()
+    #     emp_id = random.choice(self.recent_ids) if self.recent_ids else random.randint(1, int(CFG["operations"]["employees"]["list_pagination"].get("total_count", 1000)))
+    #     path_tpl = CFG["operations"]["employees"]["update_path"]
+    #     url = self.v2_base + path_tpl.format(id=emp_id)
+    #     body = build_update_body(random.randint(1,10))
+    #     r = self.client.put(url, params=self.v2_query, json=body, headers=hdr_with_corr(self.v2_headers), name="employees_update")
+    #     if r.status_code == 401:
+    #         self._login_v2()
+    #     self._think()
+    #
+    # @tag("delete_employee")
+    # @task(weight=WEIGHTS.get("delete_employee", 0))
+    # def delete_employee(self):
+    #     self._maybe_refresh_tokens()
+    #     emp_id = self.recent_ids.pop(0) if self.recent_ids else random.randint(1, int(CFG["operations"]["employees"]["list_pagination"].get("total_count", 1000)))
+    #     path_tpl = CFG["operations"]["employees"]["delete_path"]
+    #     url = self.v2_base + path_tpl.format(id=emp_id)
+    #     r = self.client.delete(url, params=self.v2_query, headers=hdr_with_corr(self.v2_headers), name="employees_delete")
+    #     if r.status_code == 401:
+    #         self._login_v2()
+    #     self._think()
+    #
+    # @tag("get_all_users")
+    # @task(weight=WEIGHTS.get("get_all_users", 0))
+    # def get_all_users(self):
+    #     self._maybe_refresh_tokens()
+    #     url = self.v2_base + CFG["operations"]["users"]["get_all_path"]
+    #     print("Getting all users from", url)
+    #     print("Headers: ", self.v2_headers)
+    #     r = self.client.get(url, params=self.v2_query, headers=hdr_with_corr(self.v2_headers), name="get_all_users")
+    #     if r.status_code == 401:
+    #         self._login_v2()
+    #     self._think()
+    #
 
 
 @events.init.add_listener

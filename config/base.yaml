@@ -1,7 +1,7 @@
 service:
   # Base URLs (v1 for reads, v2 for writes). v2 base may be overridden by login response "url".
-  rest_v1_base_url: "https://localhost:8080"
-  rest_v2_base_url: "https://localhost:8080"
+  rest_v1_base_url: "https://localhost:8830"
+  rest_v2_base_url: "https://localhost:8830"
   timeout_s: 15
 
 auth:
@@ -78,10 +78,10 @@ operations:
     update_path: "/data/people/{id}"
     delete_path: "/data/people/{id}"
     list_pagination:
-      page_size: 2000
-      total_count: 55000
+      page_size: 20
+      total_count: 1063380
     seeded:
-      emp_ids: [125494748]
+      emp_ids: [508025, 508026, 508030, 508031, 508032, 508033, 508034, 508035, 508036, 508037, 422921]
 
 load:
   vus: 10

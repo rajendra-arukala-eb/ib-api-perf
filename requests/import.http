@@ -1,0 +1,24 @@
+
+### Login
+POST {{url}}/rest/api2/login
+Content-Type: application/json
+Authorization: Basic {{c1}} {{password}}
+
+> {%
+    if (response.body && response.body.results && response.body.results.length > 0) {
+        client.global.set("jwt", response.body.results[0].JWT);
+        client.global.set("api_url", response.body.results[0].url);
+        client.log("JWT Received: ", response.body.results[0].JWT)
+    }
+%}
+
+
+
+
+###
+POST {{api_url}}/data/import?mapIntegrationName=mmm&importType=0&importMode=2
+Content-Type: text/csv
+JWT: {{jwt}}
+
+Location_ID,Street_Address_1,City
+"60013","1800 East Avenue "J"","Lancaster"

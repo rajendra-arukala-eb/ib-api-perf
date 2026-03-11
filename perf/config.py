@@ -1,3 +1,4 @@
+import json
 import os, yaml
 
 def deep_merge(a: dict, b: dict) -> dict:
@@ -21,4 +22,5 @@ def load_cfg():
     return base
 
 CFG = load_cfg()
+print("CFG: ", json.dumps(CFG, indent=4))
 WEIGHTS = CFG["load"]["flow_weights"]

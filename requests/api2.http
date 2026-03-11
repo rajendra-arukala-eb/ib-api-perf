@@ -1,0 +1,132 @@
+### @dev
+### Login
+POST {{url}}/rest/api2/login
+Content-Type: application/json
+Authorization: Basic {{username}} {{password}}
+
+> {%
+    if (response.body && response.body.results && response.body.results.length > 0) {
+        client.global.set("jwt", response.body.results[0].JWT);
+        client.global.set("api_url", response.body.results[0].url);
+        client.log("JWT Received: ", response.body.results[0].JWT)
+    }
+    %}
+
+### Login
+POST {{url}}/rest/api2/login
+Content-Type: application/json
+Authorization: Basic {{c1}} {{password}}
+
+> {%
+    if (response.body && response.body.results && response.body.results.length > 0) {
+        client.global.set("jwt", response.body.results[0].JWT);
+        client.global.set("api_url", response.body.results[0].url);
+        client.log("JWT Received: ", response.body.results[0].JWT)
+    }
+%}
+
+
+### GET Customer
+GET {{api_url}}/system/customers/35015
+Content-Type: application/json
+JWT: {{jwt}}
+
+
+###
+GET {{api_url}}/meta/objects/DepTest/fields/BROO
+Content-Type: application/json
+JWT: {{jwt}}
+
+
+
+###
+POST {{api_url}}/meta/objects/DepTest/fields
+Content-Type: application/json
+JWT: {{jwt}}
+
+{
+  "integrationName": "{{$random.name.firstName}}",
+  "fieldType": "Picklist",
+  "fieldLabel": "{{$timestamp}}{{$random.name.firstName}}",
+  "values": [
+                {
+                "value": "Option-1",
+                "integrationCode": "O1",
+                "isDefault": false,
+                "isDeployed": true
+                },
+                {
+                "value": "Option-2",
+                "integrationCode": "O2",
+                "isDefault": false,
+                "isDeployed": true
+                }
+    ],
+"caseInsensitive": true,
+"sort": true,
+"excluePickListAddition": false,
+"useNameExport": false,
+"defaultValue": {
+"assignToExistingRecords": false
+},
+"isIndexed": false,
+"isAuditable": false,
+"isRequired": false,
+"allowFiltering": true
+}
+
+### POST Create Customer
+POST {{url}}/master/api2/system/customers
+Content-Type: application/json
+JWT: {{jwt}}
+
+{
+  "companyName": "{{$random.team.name}}",
+  "loginName": "{{$random.name.username}}",
+  "email": "{{$random.internet.emailAddress}}",
+  "firstName": "{{$random.name.firstName}}",
+  "lastName": "{{$random.name.lastName}}",
+  "dbName": "RB",
+  "mobileDevEnabled": true,
+  "password": "welcome",
+  "timeZone": "Asia/Calcutta",
+  "maxApplications": 100,
+  "country": "US",
+  "language": "en",
+  "maxStorageMB": 250,
+  "maxFieldDefs": 40000,
+  "serviceLevel": 2,
+  "maxUsers": 5,
+  "securityLevel": 1,
+  "maxObjectDefs": 2000,
+  "process": "Customer Default"
+}
+
+
+
+
+###
+POST {{api_url}}/data/import?mapIntegrationName=mmm&importType=0&importMode=2
+Content-Type: text/csv
+JWT: {{jwt}}
+
+Location_ID,Street_Address_1,City
+"60013","1800 East Avenue "J"","Lancaster"
+
+
+
+###
+POST http://localhost:8830/rest/api2/login
+Content-Type: application/json
+Authorization: Basic apiuser1@yopmail.com welcome
+
+###
+POST http://localhost:8830/rest/api2/login
+Content-Type: application/json
+Api-Key: 20f4702a-1f77-46c2-93b1-344930c4bf67-10066-25389
+
+###
+POST http://localhost:8830/rest/api2/login
+Content-Type: application/json
+Api-Key: f37313a6-76a4-43d0-b0d1-353568e1a0a7-10066-32013
+
